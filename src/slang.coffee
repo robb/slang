@@ -2,7 +2,7 @@
 
 class window.Slang
   @defaultSettings:
-    tileSize: 7
+    tilesPerRow:  20
 
   constructor: (@selector, @settings = Slang.defaultSettings) ->
     @_canvas  = document.createElement 'canvas'
@@ -17,16 +17,22 @@ class window.Slang
       @_canvas.height = image.height
       @_context = @_canvas.getContext '2d'
 
-      resized = @_resize image, 140, 84
+      scaleFactor = ~~(image.width / @settings.tilesPerRow) / 10
 
-      for x in [0..resized.width] by @settings.tileSize
-        for y in [0..resized.height] by @settings.tileSize
+      scaleWidth  = ~~((image.width  / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
+      scaleHeight = ~~((image.height / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
+
+      tileSize = scaleWidth / @settings.tilesPerRow
+      resized  = @_resize image, scaleWidth, scaleHeight
+
+      for x in [0..resized.width] by tileSize
+        for y in [0..resized.height] by tileSize
           # Points
-          topLeft     = x: x,                          y: y
-          topRight    = x: x + @settings.tileSize,     y: y
-          center      = x: x + @settings.tileSize / 2, y: y + @settings.tileSize / 2
-          bottomRight = x: x + @settings.tileSize,     y: y + @settings.tileSize
-          bottomLeft  = x: x,                          y: y + @settings.tileSize
+          topLeft     = x: x,                y: y
+          topRight    = x: x + tileSize,     y: y
+          center      = x: x + tileSize / 2, y: y + tileSize / 2
+          bottomRight = x: x + tileSize,     y: y + tileSize
+          bottomLeft  = x: x,                y: y + tileSize
 
           # Triangles
           top    = [topLeft, topRight, center]
@@ -54,15 +60,15 @@ class window.Slang
                     bottomRightDifferece < bottomLeftDifferece
 
           # Draw
-          xScale = ~~(image.width  / 140)
-          yScale = ~~(image.height / 84)
+          xScale = image.width  / scaleWidth
+          yScale = image.height / scaleHeight
 
           # first
           @_context.beginPath()
-          @_context.moveTo topLeft.x     * xScale, topLeft.y     * yScale
-          @_context.lineTo topRight.x    * xScale, topRight.y    * yScale
-          @_context.lineTo bottomRight.x * xScale, bottomRight.y * yScale
-          @_context.lineTo bottomLeft.x  * xScale, bottomLeft.y  * yScale
+          @_context.moveTo ~~(topLeft.x     * xScale), ~~(topLeft.y     * yScale)
+          @_context.lineTo ~~(topRight.x    * xScale), ~~(topRight.y    * yScale)
+          @_context.lineTo ~~(bottomRight.x * xScale), ~~(bottomRight.y * yScale)
+          @_context.lineTo ~~(bottomLeft.x  * xScale), ~~(bottomLeft.y  * yScale)
           @_context.closePath()
 
           unless falling
@@ -75,13 +81,13 @@ class window.Slang
 
           # second
           @_context.beginPath()
-          @_context.moveTo topLeft.x  * xScale, topLeft.y  * yScale
-          @_context.lineTo topRight.x * xScale, topRight.y * yScale
+          @_context.moveTo ~~(topLeft.x  * xScale), ~~(topLeft.y  * yScale)
+          @_context.lineTo ~~(topRight.x * xScale), ~~(topRight.y * yScale)
 
           unless falling
-            @_context.lineTo bottomRight.x * xScale, bottomRight.y * yScale
+            @_context.lineTo ~~(bottomRight.x * xScale), ~~(bottomRight.y * yScale)
           else
-            @_context.lineTo bottomLeft.x  * xScale, bottomLeft.y  * yScale
+            @_context.lineTo ~~(bottomLeft.x  * xScale), ~~(bottomLeft.y  * yScale)
 
           @_context.closePath()
 
