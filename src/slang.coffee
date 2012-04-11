@@ -1,7 +1,14 @@
+{ceil, floor} = Math
+
 class window.Slang
-  constructor: (@selector) ->
+  @defaultSettings:
+    tileSize: 7
+
+  constructor: (@selector, @settings = Slang.defaultSettings) ->
     @_canvas  = document.createElement 'canvas'
     @_context = @_canvas.getContext '2d'
+
+    @settings[k] ?= v for k, v of Slang.defaultSettings
 
   process: (imageData) ->
     image        = new Image
@@ -12,14 +19,14 @@ class window.Slang
 
       resized = @_resize image, 140, 84
 
-      for x in [0..resized.width] by 7
-        for y in [0..resized.height] by 7
+      for x in [0..resized.width] by @settings.tileSize
+        for y in [0..resized.height] by @settings.tileSize
           # Points
-          topLeft     = x: x,       y: y
-          topRight    = x: x + 7,   y: y
-          center      = x: x + 3.5, y: y + 3.5
-          bottomRight = x: x + 7,   y: y + 7
-          bottomLeft  = x: x,       y: y + 7
+          topLeft     = x: x,                          y: y
+          topRight    = x: x + @settings.tileSize,     y: y
+          center      = x: x + @settings.tileSize / 2, y: y + @settings.tileSize / 2
+          bottomRight = x: x + @settings.tileSize,     y: y + @settings.tileSize
+          bottomLeft  = x: x,                          y: y + @settings.tileSize
 
           # Triangles
           top    = [topLeft, topRight, center]
@@ -47,15 +54,15 @@ class window.Slang
                     bottomRightDifferece < bottomLeftDifferece
 
           # Draw
-          xScale = image.width  / 140
-          yScale = image.height / 84
+          xScale = ~~(image.width  / 140)
+          yScale = ~~(image.height / 84)
 
           # first
           @_context.beginPath()
-          @_context.moveTo (x    ) * xScale, (    y) * yScale
-          @_context.lineTo (x + 7) * xScale, (    y) * yScale
-          @_context.lineTo (x + 7) * xScale, (y + 7) * yScale
-          @_context.lineTo (x    ) * xScale, (y + 7) * yScale
+          @_context.moveTo topLeft.x     * xScale, topLeft.y     * yScale
+          @_context.lineTo topRight.x    * xScale, topRight.y    * yScale
+          @_context.lineTo bottomRight.x * xScale, bottomRight.y * yScale
+          @_context.lineTo bottomLeft.x  * xScale, bottomLeft.y  * yScale
           @_context.closePath()
 
           unless falling
@@ -63,20 +70,18 @@ class window.Slang
           else
             style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
 
-          @_context.fillStyle   = style
-          @_context.strokeStyle = style
+          @_context.fillStyle = style
           @_context.fill()
-          @_context.stroke()
 
           # second
           @_context.beginPath()
-          @_context.moveTo (x    ) * xScale, (    y) * yScale
-          @_context.lineTo (x + 7) * xScale, (    y) * yScale
+          @_context.moveTo topLeft.x  * xScale, topLeft.y  * yScale
+          @_context.lineTo topRight.x * xScale, topRight.y * yScale
 
           unless falling
-            @_context.lineTo (x + 7) * xScale, (y + 7) * yScale
+            @_context.lineTo bottomRight.x * xScale, bottomRight.y * yScale
           else
-            @_context.lineTo (x    ) * xScale, (y + 7) * yScale
+            @_context.lineTo bottomLeft.x  * xScale, bottomLeft.y  * yScale
 
           @_context.closePath()
 
@@ -88,7 +93,6 @@ class window.Slang
           @_context.fillStyle   = style
           @_context.strokeStyle = style
           @_context.fill()
-          @_context.stroke()
 
       document.querySelector(@selector).src = @_canvas.toDataURL()
 
