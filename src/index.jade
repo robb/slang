@@ -23,16 +23,16 @@ html
         background: blue;
       }
 
-      canvas {
-        max-width: 100%;
+      #result {
+        max-width:  100%;
         max-height: 100%;
       }
   body
     #dropzone
-      canvas#main
+      img#result
 
     script(type = "text/javascript")
-      var slang = new Slang('#main');
+      var slang = new Slang('#result');
 
       document.querySelector('#dropzone').addEventListener('drop', function(e) {
         var reader = new FileReader();

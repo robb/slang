@@ -1,6 +1,6 @@
 class window.Slang
-  constructor: (selector) ->
-    @_canvas  = document.querySelector selector
+  constructor: (@selector) ->
+    @_canvas  = document.createElement 'canvas'
     @_context = @_canvas.getContext '2d'
 
   process: (imageData) ->
@@ -27,14 +27,26 @@ class window.Slang
           bottom = [bottomRight, bottomLeft, center]
           left   = [bottomLeft, topLeft, center]
 
-          # Averages
+          # Triangle average colors
           topAverage    = @_average @_cutout resized, top
           rightAverage  = @_average @_cutout resized, right
           bottomAverage = @_average @_cutout resized, bottom
           leftAverage   = @_average @_cutout resized, left
 
-          # Draw
+          # Differences between the average colors
+          topLeftDifference    = @_difference topAverage,    leftAverage
+          topRightDifference   = @_difference topAverage,    rightAverage
+          bottomLeftDifferece  = @_difference bottomAverage, leftAverage
+          bottomRightDifferece = @_difference bottomAverage, rightAverage
 
+          falling = topLeftDifference < topRightDifference    and
+                    topLeftDifference < bottomLeftDifferece   and
+                    topLeftDifference < bottomRightDifferece  or
+                    bottomRightDifferece < topLeftDifference  and
+                    bottomRightDifferece < topRightDifference and
+                    bottomRightDifferece < bottomLeftDifferece
+
+          # Draw
           xScale = image.width  / 140
           yScale = image.height / 84
 
@@ -46,7 +58,10 @@ class window.Slang
           @_context.lineTo (x    ) * xScale, (y + 7) * yScale
           @_context.closePath()
 
-          style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
+          unless falling
+            style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
+          else
+            style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
 
           @_context.fillStyle   = style
           @_context.strokeStyle = style
@@ -57,17 +72,32 @@ class window.Slang
           @_context.beginPath()
           @_context.moveTo (x    ) * xScale, (    y) * yScale
           @_context.lineTo (x + 7) * xScale, (    y) * yScale
-          @_context.lineTo (x + 7) * xScale, (y + 7) * yScale
+
+          unless falling
+            @_context.lineTo (x + 7) * xScale, (y + 7) * yScale
+          else
+            @_context.lineTo (x    ) * xScale, (y + 7) * yScale
+
           @_context.closePath()
 
-          style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
+          if falling
+            style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
+          else
+            style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
 
           @_context.fillStyle   = style
           @_context.strokeStyle = style
           @_context.fill()
           @_context.stroke()
 
+      document.querySelector(@selector).src = @_canvas.toDataURL()
+
     image.src = imageData
+
+  _difference: (colorA, colorB) ->
+    (Math.abs colorA.r - colorB.r) / 3 +
+    (Math.abs colorA.g - colorB.g) / 3 +
+    (Math.abs colorA.b - colorB.b) / 3
 
   _resize: (source, width, height) ->
     canvas = document.createElement 'canvas'
