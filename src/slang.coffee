@@ -3,8 +3,10 @@
 class window.Slang
   @defaultSettings:
     tilesPerRow:  20
+    width:        1024
+    height:       768
 
-  constructor: (@selector, @settings = Slang.defaultSettings) ->
+  constructor: (@targetSelector, @settings = Slang.defaultSettings) ->
     @_canvas  = document.createElement 'canvas'
     @_context = @_canvas.getContext '2d'
 
@@ -13,11 +15,12 @@ class window.Slang
   process: (imageData) ->
     image        = new Image
     image.onload = =>
-      @_canvas.width  = image.width
-      @_canvas.height = image.height
+      @_canvas.width  = @settings.width
+      @_canvas.height = @settings.height
       @_context = @_canvas.getContext '2d'
 
       scaleFactor = ~~(image.width / @settings.tilesPerRow) / 10
+      scaleFactor *= 2 until scaleFactor > 0.5
 
       scaleWidth  = ~~((image.width  / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
       scaleHeight = ~~((image.height / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
@@ -60,8 +63,8 @@ class window.Slang
                     bottomRightDifferece < bottomLeftDifferece
 
           # Draw
-          xScale = image.width  / scaleWidth
-          yScale = image.height / scaleHeight
+          xScale = @_canvas.width  / scaleWidth
+          yScale = @_canvas.height / scaleHeight
 
           # first
           @_context.beginPath()
@@ -100,7 +103,7 @@ class window.Slang
           @_context.strokeStyle = style
           @_context.fill()
 
-      document.querySelector(@selector).src = @_canvas.toDataURL()
+      document.querySelector(@targetSelector).src = @_canvas.toDataURL()
 
     image.src = imageData
 
