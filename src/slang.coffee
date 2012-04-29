@@ -3,8 +3,6 @@
 class window.Slang
   @defaultSettings:
     tilesPerRow:  20
-    width:        1024
-    height:       768
 
   constructor: (@targetSelector, @settings = Slang.defaultSettings) ->
     @_canvas  = document.createElement 'canvas'
@@ -12,11 +10,11 @@ class window.Slang
 
     @settings[k] ?= v for k, v of Slang.defaultSettings
 
-  process: (imageData) ->
+  process: (imageData, callback) ->
     image        = new Image
     image.onload = =>
-      @_canvas.width  = @settings.width
-      @_canvas.height = @settings.height
+      @_canvas.width  = image.width
+      @_canvas.height = image.height
       @_context = @_canvas.getContext '2d'
 
       scaleFactor = ~~(image.width / @settings.tilesPerRow) / 10
@@ -103,7 +101,7 @@ class window.Slang
           @_context.strokeStyle = style
           @_context.fill()
 
-      document.querySelector(@targetSelector).src = @_canvas.toDataURL()
+      callback? @_canvas.toDataURL()
 
     image.src = imageData
 
