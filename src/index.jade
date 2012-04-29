@@ -14,6 +14,11 @@ html
         background-image: url('./img/broken_noise.png');
 
         font-family: "Droid Sans", "Helvetica", sans;
+        color:       #FFF;
+
+        -webkit-user-select:   none;
+        -moz-user-select:      none;
+        user-select:           none;
       }
 
       #dropzone {
@@ -43,14 +48,42 @@ html
         background-position: center;
       }
 
-      #instructions {
+      .center {
         text-align:  center;
+      }
+
+      #instructions {
         font-weight: 700;
         font-size:   60px;
 
-        color:       #FFF;
-        text-shadow: 0 1px 0   rgba(0, 0, 0, 0.5),
+        text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
                      0 0   3px rgba(0, 0, 0, 0.5);
+      }
+
+      #dragzone {
+        display: none;
+      }
+
+      #dragzone p {
+        text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
+                     0 0   3px rgba(0, 0, 0, 0.3);
+      }
+
+      .result {
+        height: 70px;
+        border: 4px solid white;
+        margin: 0;
+
+        box-shadow: 0 3px 4px rgba(0, 0, 0, 0.7);
+
+        -webkit-user-select: element;
+        -moz-user-select:    element;
+        user-select:         element;
+
+        cursor: hand;
+        cursor: -webkit-grab;
+        cursor: -moz-grab;
+        cursor: grab;
       }
 
       #footer {
@@ -61,48 +94,91 @@ html
         bottom:   10px;
         left:     10px;
 
+        overflow: hidden;
+
         font-size:   15px;
-        color:       #FFF;
         text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
                      0 0   3px rgba(0, 0, 0, 0.3);
 
-        opacity: 0.7;
+        color: rgba(255, 255, 255, 0.7);
       }
+
+      #footer a {
+        text-decoration: none;
+        opacity:         1;
+        color:           #FFF;
+      }
+
   body
     #dropzone
-      #instructions Drag an image here
+      .center
+        #instructions Drag an image here
+        #dragzone
+          img(draggable = true).result
+          p (Drag me to save)
 
       #footer
-        | Built by Robert Böhnke – inspired by Rev Dan Catt's flambient
+        | Built by
+        a(href = 'http://robb.is') Robert Böhnke
+        |  – inspired by Rev Dan Catt's
+        a(href = 'http://revdancatt.github.com/Flambient/') Flambient
 
     script(type = "text/javascript")
       var slang = new Slang('#result');
 
       try {
         var dropzone     = document.querySelector('#dropzone'),
-            instructions = document.querySelector('#instructions');
+            instructions = document.querySelector('#instructions'),
+            dragzone     = document.querySelector('#dragzone'),
+            resultImage  = document.querySelector('#dragzone .result'),
+            dragHandler  = null;
 
-        dropzone.addEventListener("dragover", function(event) {
-          event.preventDefault();
+        dropzone.addEventListener('dragover', function(e) {
+          e.preventDefault();
         }, true);
 
         dropzone.addEventListener('drop', function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+
           var reader = new FileReader();
 
-          reader.onload = function(event) {
-            instructions.innerHTML = "Processing…";
+          reader.onload = function(e) {
+            // Set up UI
+            instructions.innerHTML = 'Processing…';
+            dragzone.style.display = 'none';
 
-            slang.process(event.target.result, function(data) {
+            console.log(e);
+
+            slang.process(e.target.result, function(error, data) {
+              if (error) {
+                instructions.innerHTML = "Could not process the image :-/";
+                return;
+              }
+
               dropzone.style.backgroundImage = "url(" + data + ")";
 
-              instructions.innerHTML = "Finished";
+              // Set up UI
+              instructions.innerHTML = 'Finished';
+              dragzone.style.display = 'block';
+              resultImage.src        = data;
+
+              // Remove the old drag handler
+              if (dragHandler) {
+                resultImage.removeEventListener('dragstart', dragHandler);
+              }
+
+              // Add drag handler to the result image
+              dragHandler = function(e) {
+                e.dataTransfer.setData('image/png', data);
+              }
+
+              resultImage.addEventListener('dragstart', dragHandler);
             });
           };
 
           reader.readAsDataURL(e.dataTransfer.files[0]);
-
-          e.preventDefault();
         }, true);
-      } catch (e) {
-
+      } catch (error) {
+        instructions.innerHTML = "Could not process the image :-/";
       }

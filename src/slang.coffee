@@ -12,96 +12,102 @@ class window.Slang
 
   process: (imageData, callback) ->
     image        = new Image
+
+    image.onerror = (error) -> callback? error
+
     image.onload = =>
-      @_canvas.width  = image.width
-      @_canvas.height = image.height
-      @_context = @_canvas.getContext '2d'
+      try
+        @_canvas.width  = image.width
+        @_canvas.height = image.height
+        @_context = @_canvas.getContext '2d'
 
-      scaleFactor = ~~(image.width / @settings.tilesPerRow) / 10
-      scaleFactor *= 2 until scaleFactor > 0.5
+        scaleFactor = ~~(image.width / @settings.tilesPerRow) / 10
+        scaleFactor *= 2 until scaleFactor > 0.5
 
-      scaleWidth  = ~~((image.width  / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
-      scaleHeight = ~~((image.height / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
+        scaleWidth  = ~~((image.width  / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
+        scaleHeight = ~~((image.height / scaleFactor) / @settings.tilesPerRow) * @settings.tilesPerRow
 
-      tileSize = scaleWidth / @settings.tilesPerRow
-      resized  = @_resize image, scaleWidth, scaleHeight
+        tileSize = scaleWidth / @settings.tilesPerRow
+        resized  = @_resize image, scaleWidth, scaleHeight
 
-      for x in [0..resized.width] by tileSize
-        for y in [0..resized.height] by tileSize
-          # Points
-          topLeft     = x: x,                y: y
-          topRight    = x: x + tileSize,     y: y
-          center      = x: x + tileSize / 2, y: y + tileSize / 2
-          bottomRight = x: x + tileSize,     y: y + tileSize
-          bottomLeft  = x: x,                y: y + tileSize
+        for x in [0..resized.width] by tileSize
+          for y in [0..resized.height] by tileSize
+            # Points
+            topLeft     = x: x,                y: y
+            topRight    = x: x + tileSize,     y: y
+            center      = x: x + tileSize / 2, y: y + tileSize / 2
+            bottomRight = x: x + tileSize,     y: y + tileSize
+            bottomLeft  = x: x,                y: y + tileSize
 
-          # Triangles
-          top    = [topLeft, topRight, center]
-          right  = [topRight, bottomRight, center]
-          bottom = [bottomRight, bottomLeft, center]
-          left   = [bottomLeft, topLeft, center]
+            # Triangles
+            top    = [topLeft, topRight, center]
+            right  = [topRight, bottomRight, center]
+            bottom = [bottomRight, bottomLeft, center]
+            left   = [bottomLeft, topLeft, center]
 
-          # Triangle average colors
-          topAverage    = @_average @_cutout resized, top
-          rightAverage  = @_average @_cutout resized, right
-          bottomAverage = @_average @_cutout resized, bottom
-          leftAverage   = @_average @_cutout resized, left
+            # Triangle average colors
+            topAverage    = @_average @_cutout resized, top
+            rightAverage  = @_average @_cutout resized, right
+            bottomAverage = @_average @_cutout resized, bottom
+            leftAverage   = @_average @_cutout resized, left
 
-          # Differences between the average colors
-          topLeftDifference    = @_difference topAverage,    leftAverage
-          topRightDifference   = @_difference topAverage,    rightAverage
-          bottomLeftDifferece  = @_difference bottomAverage, leftAverage
-          bottomRightDifferece = @_difference bottomAverage, rightAverage
+            # Differences between the average colors
+            topLeftDifference    = @_difference topAverage,    leftAverage
+            topRightDifference   = @_difference topAverage,    rightAverage
+            bottomLeftDifferece  = @_difference bottomAverage, leftAverage
+            bottomRightDifferece = @_difference bottomAverage, rightAverage
 
-          falling = topLeftDifference < topRightDifference    and
-                    topLeftDifference < bottomLeftDifferece   and
-                    topLeftDifference < bottomRightDifferece  or
-                    bottomRightDifferece < topLeftDifference  and
-                    bottomRightDifferece < topRightDifference and
-                    bottomRightDifferece < bottomLeftDifferece
+            falling = topLeftDifference < topRightDifference    and
+                      topLeftDifference < bottomLeftDifferece   and
+                      topLeftDifference < bottomRightDifferece  or
+                      bottomRightDifferece < topLeftDifference  and
+                      bottomRightDifferece < topRightDifference and
+                      bottomRightDifferece < bottomLeftDifferece
 
-          # Draw
-          xScale = @_canvas.width  / scaleWidth
-          yScale = @_canvas.height / scaleHeight
+            # Draw
+            xScale = @_canvas.width  / scaleWidth
+            yScale = @_canvas.height / scaleHeight
 
-          # first
-          @_context.beginPath()
-          @_context.moveTo ~~(topLeft.x     * xScale), ~~(topLeft.y     * yScale)
-          @_context.lineTo ~~(topRight.x    * xScale), ~~(topRight.y    * yScale)
-          @_context.lineTo ~~(bottomRight.x * xScale), ~~(bottomRight.y * yScale)
-          @_context.lineTo ~~(bottomLeft.x  * xScale), ~~(bottomLeft.y  * yScale)
-          @_context.closePath()
-
-          unless falling
-            style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
-          else
-            style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
-
-          @_context.fillStyle = style
-          @_context.fill()
-
-          # second
-          @_context.beginPath()
-          @_context.moveTo ~~(topLeft.x  * xScale), ~~(topLeft.y  * yScale)
-          @_context.lineTo ~~(topRight.x * xScale), ~~(topRight.y * yScale)
-
-          unless falling
+            # first
+            @_context.beginPath()
+            @_context.moveTo ~~(topLeft.x     * xScale), ~~(topLeft.y     * yScale)
+            @_context.lineTo ~~(topRight.x    * xScale), ~~(topRight.y    * yScale)
             @_context.lineTo ~~(bottomRight.x * xScale), ~~(bottomRight.y * yScale)
-          else
             @_context.lineTo ~~(bottomLeft.x  * xScale), ~~(bottomLeft.y  * yScale)
+            @_context.closePath()
 
-          @_context.closePath()
+            unless falling
+              style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
+            else
+              style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
 
-          if falling
-            style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
-          else
-            style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
+            @_context.fillStyle = style
+            @_context.fill()
 
-          @_context.fillStyle   = style
-          @_context.strokeStyle = style
-          @_context.fill()
+            # second
+            @_context.beginPath()
+            @_context.moveTo ~~(topLeft.x  * xScale), ~~(topLeft.y  * yScale)
+            @_context.lineTo ~~(topRight.x * xScale), ~~(topRight.y * yScale)
 
-      callback? @_canvas.toDataURL()
+            unless falling
+              @_context.lineTo ~~(bottomRight.x * xScale), ~~(bottomRight.y * yScale)
+            else
+              @_context.lineTo ~~(bottomLeft.x  * xScale), ~~(bottomLeft.y  * yScale)
+
+            @_context.closePath()
+
+            if falling
+              style = "rgba(#{leftAverage.r}, #{leftAverage.g}, #{leftAverage.b}, 1)"
+            else
+              style = "rgba(#{rightAverage.r}, #{rightAverage.g}, #{rightAverage.b}, 1)"
+
+            @_context.fillStyle   = style
+            @_context.strokeStyle = style
+            @_context.fill()
+
+        callback? null, @_canvas.toDataURL()
+      catch error
+        callback? error
 
     image.src = imageData
 
