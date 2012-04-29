@@ -6,6 +6,31 @@ html
     link(href = "http://fonts.googleapis.com/css?family=Droid+Sans:700", rel = "stylesheet", type = "text/css")
 
     style
+      @-webkit-keyframes processing {
+        0%   { opacity: 1.0; }
+        50%  { opacity: 0.7; }
+        100% { opacity: 1.0; }
+      }
+
+      @-moz-keyframes processing {
+        0%   { opacity: 1.0; }
+        50%  { opacity: 0.7; }
+        100% { opacity: 1.0; }
+      }
+
+      @-ms-keyframes processing {
+        0%   { opacity: 1.0; }
+        50%  { opacity: 0.7; }
+        100% { opacity: 1.0; }
+      }
+
+      @keyframes processing {
+        0%   { opacity: 1.0; }
+        50%  { opacity: 0.7; }
+        100% { opacity: 1.0; }
+      }
+
+
       body {
         margin: 0
         width:  100%;
@@ -60,6 +85,16 @@ html
                      0 0   3px rgba(0, 0, 0, 0.5);
       }
 
+      #instructions.processing {
+        -webkit-animation: processing 2s infinite;
+        -moz-animation:    processing 2s infinite;
+        -ms-animation:     processing 2s infinite;
+      }
+
+      #instructions.finished {
+        display: none;
+      }
+
       #dragzone {
         display: none;
       }
@@ -70,8 +105,9 @@ html
       }
 
       .result {
-        height: 70px;
-        border: 4px solid white;
+        max-height: 200px;
+
+        border: 9px solid white;
         margin: 0;
 
         box-shadow: 0 3px 4px rgba(0, 0, 0, 0.7);
@@ -115,7 +151,7 @@ html
         #instructions Drag an image here
         #dragzone
           img(draggable = true).result
-          p (Drag me to save)
+          p (use "save as" to download)
 
       #footer
         | Built by
@@ -146,35 +182,38 @@ html
           reader.onload = function(e) {
             // Set up UI
             instructions.innerHTML = 'Processing…';
+            instructions.className = 'processing';
+
             dragzone.style.display = 'none';
+            setTimeout(function() {
+              slang.process(e.target.result, function(error, data) {
+                if (error) {
+                  instructions.innerHTML = 'Could not process the image :-/';
+                  instructions.className = '';
+                  return;
+                }
 
-            console.log(e);
+                dropzone.style.backgroundImage = "url(" + data + ")";
 
-            slang.process(e.target.result, function(error, data) {
-              if (error) {
-                instructions.innerHTML = "Could not process the image :-/";
-                return;
-              }
+                // Set up UI
+                instructions.className = 'finished';
+                dragzone.style.display = 'block';
+                resultImage.src        = data;
 
-              dropzone.style.backgroundImage = "url(" + data + ")";
+                // Remove the old drag handler
+                if (dragHandler) {
+                  resultImage.removeEventListener('dragstart', dragHandler);
+                }
 
-              // Set up UI
-              instructions.innerHTML = 'Finished';
-              dragzone.style.display = 'block';
-              resultImage.src        = data;
+                // Add drag handler to the result image
+                dragHandler = function(e) {
+                  e.dataTransfer.effectAllowed = 'all';
+                  e.dataTransfer.setData('image/png', data);
+                }
 
-              // Remove the old drag handler
-              if (dragHandler) {
-                resultImage.removeEventListener('dragstart', dragHandler);
-              }
-
-              // Add drag handler to the result image
-              dragHandler = function(e) {
-                e.dataTransfer.setData('image/png', data);
-              }
-
-              resultImage.addEventListener('dragstart', dragHandler);
-            });
+                resultImage.addEventListener('dragstart', dragHandler);
+              });
+            }, 50);
           };
 
           reader.readAsDataURL(e.dataTransfer.files[0]);
