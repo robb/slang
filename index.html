@@ -1,0 +1,207 @@
+<!DOCTYPE html><html><head><meta charset="utf8"><script src="/slang.js" type="text/javascript"></script><link href="http://fonts.googleapis.com/css?family=Droid+Sans:700" rel="stylesheet" type="text/css"><style>@-webkit-keyframes processing {
+  0%   { opacity: 1.0; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 1.0; }
+}
+
+@-moz-keyframes processing {
+  0%   { opacity: 1.0; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 1.0; }
+}
+
+@-ms-keyframes processing {
+  0%   { opacity: 1.0; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 1.0; }
+}
+
+@keyframes processing {
+  0%   { opacity: 1.0; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 1.0; }
+}
+
+body {
+  margin: 0
+  width:  100%;
+  height: 100%;
+
+  background-image: url('./img/broken_noise.png');
+
+  font-family: "Droid Sans", "Helvetica", sans;
+  color:       #FFF;
+
+  -webkit-user-select:   none;
+  -moz-user-select:      none;
+  user-select:           none;
+}
+
+#dropzone {
+  position: fixed;
+  top:      0;
+  right:    0;
+  bottom:   0;
+  left:     0;
+
+  background-size:     cover;
+  background-position: center;
+}
+
+.center {
+  width:  100%;
+  height: 100%;
+
+  display: -webkit-box;
+  display: -moz-box;
+  display: box;
+
+  -webkit-box-orient: horizontal;
+  -moz-box-orient:    horizontal;
+  box-orient:         horizontal;
+
+  -webkit-box-pack: center;
+  -moz-box-pack:    center;
+  box-pack:         center;
+
+  -webkit-box-align:  center;
+  -moz-box-align:     center;
+  box-align:          center;
+
+  background: rgba(0, 0, 0, 0.3);
+
+  text-align:  center;
+}
+
+#instructions {
+  font-weight: 700;
+  font-size:   60px;
+
+  text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
+               0 0   3px rgba(0, 0, 0, 0.5);
+
+}
+
+#instructions.processing {
+  -webkit-animation: processing 2s infinite;
+  -moz-animation:    processing 2s infinite;
+  -ms-animation:     processing 2s infinite;
+}
+
+#instructions.finished {
+  display: none;
+}
+
+#dragzone {
+  display: none;
+}
+
+#dragzone p {
+  text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
+               0 0   3px rgba(0, 0, 0, 0.3);
+
+}
+
+.result {
+  max-height: 200px;
+
+  border: 9px solid white;
+  margin: 0;
+
+  box-shadow: 0 3px 4px rgba(0, 0, 0, 0.7);
+
+  -webkit-user-select: element;
+  -moz-user-select:    element;
+  user-select:         element;
+
+  cursor: hand;
+  cursor: -webkit-grab;
+  cursor: -moz-grab;
+  cursor: grab;
+}
+
+#footer {
+  height:    15px;
+
+  position: absolute;
+  right:    10px;
+  bottom:   10px;
+  left:     10px;
+
+  font-size:   15px;
+  text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
+               0 0   3px rgba(0, 0, 0, 0.3);
+
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#footer a {
+  text-decoration: none;
+  opacity:         1;
+  color:           #FFF;
+}
+
+</style></head><body><div id="dropzone"><div class="grey"></div><div class="center"><div id="instructions">Drag an image here</div><div id="dragzone"><img draggable class="result"><p>(use "save as" to download)</p></div></div><div id="footer"><a href="https://github.com/robb/slang">slang</a> – Built by
+<a href="http://robb.is">Robert Böhnke</a> – inspired by Dan Catt's
+<a href="http://revdancatt.github.com/Flambient/">Flambient</a></div></div><script type="text/javascript">var slang = new Slang('#result');
+
+try {
+  var dropzone     = document.querySelector('#dropzone'),
+      instructions = document.querySelector('#instructions'),
+      dragzone     = document.querySelector('#dragzone'),
+      resultImage  = document.querySelector('#dragzone .result'),
+      dragHandler  = null;
+
+  dropzone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+  }, true);
+
+  dropzone.addEventListener('drop', function(e) {
+    e.stopPropagation();
+    e.preventDefault();
+
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+      // Set up UI
+      instructions.innerHTML = 'Processing…';
+      instructions.className = 'processing';
+
+      dragzone.style.display = 'none';
+      setTimeout(function() {
+        slang.process(e.target.result, function(error, data) {
+          if (error) {
+            instructions.innerHTML = 'Could not process the image :-/';
+            instructions.className = '';
+            return;
+          }
+
+          dropzone.style.backgroundImage = "url(" + data + ")";
+
+          // Set up UI
+          instructions.className = 'finished';
+          dragzone.style.display = 'block';
+          resultImage.src        = data;
+
+          // Remove the old drag handler
+          if (dragHandler) {
+            resultImage.removeEventListener('dragstart', dragHandler);
+          }
+
+          // Add drag handler to the result image
+          dragHandler = function(e) {
+            e.dataTransfer.effectAllowed = 'all';
+            e.dataTransfer.setData('image/png', data);
+          }
+
+          resultImage.addEventListener('dragstart', dragHandler);
+        });
+      }, 50);
+    };
+
+    reader.readAsDataURL(e.dataTransfer.files[0]);
+  }, true);
+} catch (error) {
+  instructions.innerHTML = "Could not process the image :-/";
+}
+</script></body></html>
