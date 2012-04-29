@@ -30,7 +30,6 @@ html
         100% { opacity: 1.0; }
       }
 
-
       body {
         margin: 0
         width:  100%;
@@ -53,6 +52,14 @@ html
         bottom:   0;
         left:     0;
 
+        background-size:     cover;
+        background-position: center;
+      }
+
+      .center {
+        width:  100%;
+        height: 100%;
+
         display: -webkit-box;
         display: -moz-box;
         display: box;
@@ -69,11 +76,8 @@ html
         -moz-box-align:     center;
         box-align:          center;
 
-        background-size:     cover;
-        background-position: center;
-      }
+        background: rgba(0, 0, 0, 0.3);
 
-      .center {
         text-align:  center;
       }
 
@@ -130,8 +134,6 @@ html
         bottom:   10px;
         left:     10px;
 
-        overflow: hidden;
-
         font-size:   15px;
         text-shadow: 0 2px 1px rgba(0, 0, 0, 0.5),
                      0 0   3px rgba(0, 0, 0, 0.3);
@@ -147,6 +149,7 @@ html
 
   body
     #dropzone
+      .grey
       .center
         #instructions Drag an image here
         #dragzone
@@ -154,9 +157,10 @@ html
           p (use "save as" to download)
 
       #footer
-        | Built by
+        a(href = 'https://github.com/robb/slang') slang
+        |  – Built by
         a(href = 'http://robb.is') Robert Böhnke
-        |  – inspired by Rev Dan Catt's
+        |  – inspired by Dan Catt's
         a(href = 'http://revdancatt.github.com/Flambient/') Flambient
 
     script(type = "text/javascript")
